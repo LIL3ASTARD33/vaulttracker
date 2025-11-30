@@ -25,12 +25,19 @@
 
     .app {
       width: 100%;
-      max-width: 540px;
+      max-width: 760px;
     }
 
     /* HEADER */
     .header {
       margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-left {
       text-align: left;
     }
 
@@ -43,6 +50,46 @@
       font-size: 0.85rem;
       color: #9ca3af;
       margin-top: 3px;
+    }
+
+    .header-right {
+      text-align: right;
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    .wallet-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .wallet-label {
+      color: #9ca3af;
+    }
+
+    .wallet-address,
+    .wallet-balance,
+    .network-status {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .network-status.ok {
+      color: #4ade80;
+    }
+
+    .network-status.warn {
+      color: #f97316;
+    }
+
+    .wallet-actions {
+      display: flex;
+      gap: 6px;
     }
 
     /* CARD */
@@ -183,6 +230,17 @@
       background: #0891b2;
     }
 
+    .button-outline {
+      border: 1px solid #4b5563;
+      background: transparent;
+      padding-inline: 12px;
+      font-size: 0.8rem;
+    }
+
+    .button-outline:hover {
+      background: #111827;
+    }
+
     .custom-input-row {
       display: flex;
       gap: 10px;
@@ -217,19 +275,53 @@
       text-align: center;
     }
 
-    @media (max-width: 540px) {
+    @media (max-width: 760px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-right {
+        align-self: stretch;
+        text-align: left;
+        align-items: flex-start;
+      }
+
+      .wallet-row {
+        align-items: flex-start;
+      }
+
       .card {
         padding: 18px 14px 22px;
       }
     }
   </style>
+
+  <!-- Web3Modal + WalletConnect + Ethers via CDN -->
+  <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+  <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+  <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 
 <body>
   <div class="app">
     <header class="header">
-      <div class="header-title">VaultTracker</div>
-      <div class="header-subtitle">Level 1: Build a $1,000 emergency reserve.</div>
+      <div class="header-left">
+        <div class="header-title">VaultTracker</div>
+        <div class="header-subtitle">Level 1: Build a $1,000 emergency reserve.</div>
+      </div>
+
+      <div class="header-right">
+        <div class="wallet-row">
+          <div class="wallet-label">Wallet</div>
+          <div class="wallet-address" id="walletAddress">Not connected</div>
+          <div class="wallet-balance" id="walletBalance">Balance: —</div>
+          <div class="network-status" id="networkStatus">Network: —</div>
+        </div>
+        <div class="wallet-actions">
+          <button id="connectWalletBtn" class="button-outline">Connect Wallet</button>
+        </div>
+      </div>
     </header>
 
     <main class="card">
@@ -300,6 +392,7 @@
   </div>
 
   <script>
+    /************* SAVINGS TRACKER LOGIC *************/
     const GOAL = 1000;
     const STORAGE_KEY = "dopamine_savings_total";
 
@@ -365,7 +458,150 @@
       });
     }
 
-    loadSavedTotal();
+    /************* WEB3MODAL + WALLETCONNECT *************/
+    let web3Modal;
+    let web3Provider;   // ethers.js Web3Provider
+    let signer;
+    let currentAccount = null;
+
+    const NETWORK_NAMES = {
+      1: { name: "Ethereum Mainnet", symbol: "ETH" },
+      137: { name: "Polygon Mainnet", symbol: "MATIC" },
+      56: { name: "BNB Smart Chain", symbol: "BNB" }
+    };
+
+    let walletAddressEl;
+    let walletBalanceEl;
+    let networkStatusEl;
+    let connectWalletBtn;
+
+    function shortenAddress(addr) {
+      if (!addr) return "";
+      return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
+    function initWeb3Modal() {
+      const providerOptions = {
+        walletconnect: {
+          package: window.WalletConnectProvider.default,
+          options: {
+            // Public Ethereum RPC; you can swap for your own if you like
+            rpc: {
+              1: "https://cloudflare-eth.com"
+            }
+          }
+        }
+      };
+
+      web3Modal = new window.Web3Modal.default({
+        cacheProvider: true,
+        providerOptions
+      });
+    }
+
+    async function connectWallet() {
+      try {
+        const instance = await web3Modal.connect();     // opens modal
+        web3Provider = new ethers.providers.Web3Provider(instance);
+        signer = web3Provider.getSigner();
+
+        const addr = await signer.getAddress();
+        currentAccount = addr;
+        walletAddressEl.textContent = shortenAddress(addr);
+
+        await refreshNetworkAndBalance();
+
+        // Events
+        instance.on("accountsChanged", async (accounts) => {
+          if (!accounts || accounts.length === 0) {
+            currentAccount = null;
+            walletAddressEl.textContent = "Not connected";
+            walletBalanceEl.textContent = "Balance: —";
+          } else {
+            currentAccount = accounts[0];
+            walletAddressEl.textContent = shortenAddress(currentAccount);
+            await refreshNetworkAndBalance();
+          }
+        });
+
+        instance.on("chainChanged", async () => {
+          await refreshNetworkAndBalance();
+        });
+
+        instance.on("disconnect", () => {
+          currentAccount = null;
+          walletAddressEl.textContent = "Not connected";
+          walletBalanceEl.textContent = "Balance: —";
+          networkStatusEl.textContent = "Network: —";
+          networkStatusEl.className = "network-status";
+        });
+      } catch (err) {
+        console.error("Web3Modal connect error:", err);
+        alert("Wallet connection cancelled or failed.");
+      }
+    }
+
+    async function refreshNetworkAndBalance() {
+      await updateNetworkInfo();
+      await updateBalance();
+    }
+
+    async function updateNetworkInfo() {
+      if (!web3Provider) {
+        networkStatusEl.textContent = "Network: —";
+        networkStatusEl.className = "network-status";
+        return;
+      }
+
+      try {
+        const network = await web3Provider.getNetwork();
+        const cfg = NETWORK_NAMES[network.chainId] || { name: `Chain ${network.chainId}`, symbol: "ETH" };
+
+        networkStatusEl.textContent = `Network: ${cfg.name}`;
+        networkStatusEl.className = "network-status ok";
+      } catch (err) {
+        console.error("Error reading network:", err);
+        networkStatusEl.textContent = "Network: Error";
+        networkStatusEl.className = "network-status warn";
+      }
+    }
+
+    async function updateBalance() {
+      if (!web3Provider || !currentAccount) {
+        walletBalanceEl.textContent = "Balance: —";
+        return;
+      }
+
+      try {
+        const network = await web3Provider.getNetwork();
+        const cfg = NETWORK_NAMES[network.chainId] || { symbol: "ETH" };
+        const balanceWei = await web3Provider.getBalance(currentAccount);
+        const balance = ethers.utils.formatEther(balanceWei);
+        walletBalanceEl.textContent = `Balance: ${Number(balance).toFixed(4)} ${cfg.symbol}`;
+      } catch (err) {
+        console.error("Error reading balance:", err);
+        walletBalanceEl.textContent = "Balance: Error";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      walletAddressEl = document.getElementById("walletAddress");
+      walletBalanceEl = document.getElementById("walletBalance");
+      networkStatusEl = document.getElementById("networkStatus");
+      connectWalletBtn = document.getElementById("connectWalletBtn");
+
+      if (!window.Web3Modal || !window.WalletConnectProvider || !window.ethers) {
+        alert("Web3Modal scripts failed to load. Check your connection and reload.");
+      } else {
+        initWeb3Modal();
+      }
+
+      if (connectWalletBtn) {
+        connectWalletBtn.addEventListener("click", connectWallet);
+      }
+
+      loadSavedTotal();
+    });
   </script>
 </body>
 </html>
