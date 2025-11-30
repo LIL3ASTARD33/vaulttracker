@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VaultTracker – Level 1: $1,000 Reserve</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #050816;
+      color: #f9fafb;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 540px;
+    }
+
+    /* HEADER */
+    .header {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .header-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-top: 3px;
+    }
+
+    /* CARD */
+    .card {
+      background: #111827;
+      border-radius: 18px;
+      padding: 20px 20px 26px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.6);
+      border: 1px solid #1f2937;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+
+    .stat-label {
+      color: #9ca3af;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    /* PROGRESS BAR */
+    .progress-wrapper {
+      margin-bottom: 20px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 18px;
+      background: #1f2937;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #06b6d4, #22c55e, #eab308);
+      transition: width 0.3s ease-out;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    /* MILESTONES */
+    .milestones {
+      margin-bottom: 16px;
+    }
+
+    .milestones-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .milestone-list {
+      list-style: none;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .milestone-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .milestone-item span.check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      font-size: 0.75rem;
+    }
+
+    .milestone-item.complete {
+      color: #22c55e;
+    }
+
+    .milestone-item.complete span.check {
+      background: #22c55e;
+      color: #022c22;
+      border-color: #22c55e;
+    }
+
+    /* BUTTONS + INPUT */
+    .controls {
+      margin-top: 14px;
+    }
+
+    .quick-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: #1f2937;
+      color: #e5e7eb;
+      transition: transform 0.05s ease-out, background 0.15s;
+    }
+
+    button:hover {
+      background: #374151;
+      transform: translateY(-1px);
+    }
+
+    .button-accent {
+      background: #06b6d4;
+      color: #022c22;
+      font-weight: 600;
+    }
+
+    .button-accent:hover {
+      background: #0891b2;
+    }
+
+    .custom-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    input[type="number"] {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    input[type="number"]::placeholder {
+      color: #6b7280;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    footer.footer {
+      margin-top: 14px;
+      font-size: 0.7rem;
+      color: #4b5563;
+      text-align: center;
+    }
+
+    @media (max-width: 540px) {
+      .card {
+        padding: 18px 14px 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-title">VaultTracker</div>
+      <div class="header-subtitle">Level 1: Build a $1,000 emergency reserve.</div>
+    </header>
+
+    <main class="card">
+      <div class="stat-row">
+        <div>
+          <div class="stat-label">Total Saved</div>
+          <div class="stat-value" id="totalSaved">$0.00</div>
+        </div>
+        <div>
+          <div class="stat-label">XP</div>
+          <div class="stat-value" id="xpValue">0 / 100</div>
+        </div>
+      </div>
+
+      <div class="progress-wrapper">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-labels">
+          <span id="percentLabel">0%</span>
+          <span>Goal: $1,000</span>
+        </div>
+      </div>
+
+      <section class="milestones">
+        <div class="milestones-title">Milestones</div>
+        <ul class="milestone-list">
+          <li class="milestone-item" data-amount="100">
+            <span class="check">•</span> $100 – Checkpoint 1
+          </li>
+          <li class="milestone-item" data-amount="250">
+            <span class="check">•</span> $250 – Checkpoint 2
+          </li>
+          <li class="milestone-item" data-amount="500">
+            <span class="check">•</span> $500 – Halfway Point
+          </li>
+          <li class="milestone-item" data-amount="750">
+            <span class="check">•</span> $750 – Checkpoint 3
+          </li>
+          <li class="milestone-item" data-amount="1000">
+            <span class="check">•</span> $1,000 – Level Complete
+          </li>
+        </ul>
+      </section>
+
+      <section class="controls">
+        <div class="quick-buttons">
+          <button onclick="addAmount(10)">+ $10</button>
+          <button onclick="addAmount(20)">+ $20</button>
+          <button onclick="addAmount(50)">+ $50</button>
+          <button class="button-accent" onclick="addAmount(100)">+ $100</button>
+        </div>
+
+        <div class="custom-input-row">
+          <input type="number" id="customAmount" min="1" step="1" placeholder="Custom amount (e.g. 37)" />
+          <button onclick="addCustom()">Add</button>
+        </div>
+
+        <p class="hint">
+          Log every transfer you make into your savings account here. This is your dopamine scoreboard.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Built to hack dopamine, not just dollars. Stay on mission.
+    </footer>
+  </div>
+
+  <script>
+    const GOAL = 1000;
+    const STORAGE_KEY = "dopamine_savings_total";
+
+    let total = 0;
+
+    function loadSavedTotal() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      total = stored ? parseFloat(stored) : 0;
+      if (isNaN(total)) total = 0;
+      updateUI();
+    }
+
+    function saveTotal() {
+      localStorage.setItem(STORAGE_KEY, String(total.toFixed(2)));
+    }
+
+    function formatCurrency(value) {
+      return "$" + value.toFixed(2);
+    }
+
+    function addAmount(amount) {
+      if (amount <= 0) return;
+      total += amount;
+      saveTotal();
+      updateUI();
+    }
+
+    function addCustom() {
+      const input = document.getElementById("customAmount");
+      const value = parseFloat(input.value);
+      if (!isNaN(value) && value > 0) {
+        addAmount(value);
+        input.value = "";
+      }
+    }
+
+    function updateUI() {
+      const totalEl = document.getElementById("totalSaved");
+      const xpEl = document.getElementById("xpValue");
+      const progressFill = document.getElementById("progressFill");
+      const percentLabel = document.getElementById("percentLabel");
+      const milestones = document.querySelectorAll(".milestone-item");
+
+      totalEl.textContent = formatCurrency(total);
+
+      const xp = Math.floor(total / 10); // $10 = 1 XP
+      const xpClamped = xp > 100 ? 100 : xp;
+      xpEl.textContent = xpClamped + " / 100";
+
+      const percent = Math.min((total / GOAL) * 100, 100);
+      progressFill.style.width = percent + "%";
+      percentLabel.textContent = Math.floor(percent) + "%";
+
+      milestones.forEach((item) => {
+        const amount = parseFloat(item.getAttribute("data-amount"));
+        if (total >= amount) {
+          item.classList.add("complete");
+          item.querySelector(".check").textContent = "✓";
+        } else {
+          item.classList.remove("complete");
+          item.querySelector(".check").textContent = "•";
+        }
+      });
+    }
+
+    loadSavedTotal();
+  </script>
+</body>
+</html>
