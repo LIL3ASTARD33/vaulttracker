@@ -40,12 +40,13 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       background: radial-gradient(120% 120% at 50% -10%, rgba(57, 255, 20, 0.25), rgba(57, 255, 20, 0) 55%), var(--bg-deep);
       color: var(--text-primary);
       padding: 32px 24px;
       position: relative;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     body::before {
@@ -116,6 +117,18 @@
       font-weight: 700;
       color: #290d00;
       text-shadow: 0 0 6px rgba(255, 243, 185, 0.7);
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     @keyframes fall {
@@ -223,6 +236,237 @@
       position: relative;
       overflow: hidden;
       isolation: isolate;
+    }
+
+    .leaderboard-section {
+      margin-top: 32px;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 18px;
+      border: 1px solid #1f2937;
+      padding: 18px 20px;
+      box-shadow: 0 0 24px rgba(0, 255, 0, 0.25);
+    }
+
+    .leaderboard-header h2 {
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a7f3d0;
+      margin-bottom: 4px;
+    }
+
+    .leaderboard-header p {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+
+    .leaderboard-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    #leaderboardWalletInput {
+      flex: 1;
+      min-width: 220px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.85rem;
+    }
+
+    .leaderboard-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    .leaderboard-table th {
+      font-weight: 600;
+      color: #9ca3af;
+    }
+
+    .leaderboard-row-self {
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .leaderboard-rank-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      border: 1px solid #4ade80;
+      color: #bbf7d0;
+    }
+
+    @media (max-width: 640px) {
+      .leaderboard-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    .chart-section {
+      margin-top: 40px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid #1f2937;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 0, 0.25);
+      backdrop-filter: blur(14px);
+    }
+
+    .chart-section .tradingview-widget-container {
+      width: 100%;
+    }
+
+    .chart-section #tradingview_chart {
+      width: 100% !important;
+      min-height: 340px;
+    }
+
+    .ai-section {
+      margin-top: 36px;
+      background: rgba(4, 8, 16, 0.86);
+      border: 1px solid rgba(57, 255, 20, 0.22);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 0 34px rgba(57, 255, 20, 0.28);
+      backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .ai-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ai-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-shadow: 0 0 16px rgba(57, 255, 20, 0.45);
+    }
+
+    .ai-description {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .ai-chat-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ai-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: min(380px, 55vh);
+      overflow-y: auto;
+      padding-right: 6px;
+      scroll-behavior: smooth;
+    }
+
+    .ai-message {
+      display: inline-flex;
+      max-width: 100%;
+      align-self: flex-start;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(10, 16, 26, 0.92);
+      border: 1px solid rgba(57, 255, 20, 0.18);
+      box-shadow: 0 0 18px rgba(57, 255, 20, 0.16);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+
+    .ai-message.user {
+      align-self: flex-end;
+      background: rgba(57, 255, 20, 0.12);
+      border-color: rgba(57, 255, 20, 0.32);
+      color: var(--text-primary);
+      box-shadow: 0 0 22px rgba(57, 255, 20, 0.2);
+    }
+
+    .ai-meta {
+      font-size: 0.7rem;
+      color: rgba(148, 255, 198, 0.5);
+    }
+
+    .ai-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .ai-input {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(57, 255, 20, 0.24);
+      background: rgba(5, 10, 18, 0.92);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ai-input:focus {
+      outline: none;
+      border-color: rgba(57, 255, 20, 0.55);
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.35);
+    }
+
+    .ai-submit {
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(57, 255, 20, 0.4);
+      background: linear-gradient(135deg, rgba(57, 255, 20, 0.9), rgba(57, 255, 20, 0.35));
+      color: #041007;
+      font-family: var(--font-display);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ai-submit:hover:not([disabled]) {
+      transform: translateY(-1px);
+      box-shadow: 0 0 24px rgba(57, 255, 20, 0.35);
+    }
+
+    .ai-submit[disabled] {
+      cursor: wait;
+      opacity: 0.7;
+    }
+
+    .ai-hint {
+      font-size: 0.75rem;
+      color: rgba(148, 255, 198, 0.58);
+      line-height: 1.45;
     }
 
     .card::before {
@@ -527,6 +771,28 @@
       .card {
         padding: 20px 18px 26px;
       }
+
+      .chart-section {
+        margin-top: 28px;
+        padding: 16px;
+      }
+
+      .chart-section #tradingview_chart {
+        height: 380px !important;
+      }
+
+      .ai-section {
+        padding: 18px;
+        gap: 16px;
+      }
+
+      .ai-messages {
+        max-height: 320px;
+      }
+
+      .ai-submit {
+        padding: 12px 16px;
+      }
     }
 
     .web3modal-modal-lightbox {
@@ -697,12 +963,288 @@
       </p>
     </main>
 
+    <section id="leaderboardSection" class="leaderboard-section">
+      <div class="leaderboard-header">
+        <h2>Wallet Leaderboard</h2>
+        <p>Compare wallets by on-chain balance. Your wallet is highlighted.</p>
+      </div>
+      <div class="leaderboard-controls">
+        <input
+          type="text"
+          id="leaderboardWalletInput"
+          placeholder="Paste wallet address (0x...)"
+        />
+        <button id="leaderboardAddBtn">Add Wallet</button>
+        <button id="leaderboardRefreshBtn">Refresh Balances</button>
+      </div>
+      <div class="leaderboard-table-wrapper">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Wallet</th>
+              <th>Balance</th>
+              <th>Rank</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="cryptoChartSection" class="chart-section">
+      <div class="tradingview-widget-container">
+        <div id="tradingview_chart"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+        <script type="text/javascript">
+          new TradingView.widget({
+            "width": "100%",
+            "height": 500,
+            "symbol": "BINANCE:ETHBTC",
+            "interval": "60",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "toolbar_bg": "#000000",
+            "enable_publishing": false,
+            "withdateranges": true,
+            "hide_side_toolbar": false,
+            "allow_symbol_change": true,
+            "container_id": "tradingview_chart"
+          });
+        </script>
+      </div>
+    </section>
+
+    <section class="ai-section" id="cryptoIntel">
+      <div class="ai-header">
+        <h2 class="ai-title">Crypto Intel Console</h2>
+        <p class="ai-description">
+          Ask about digital assets, blockchains, and market tactics. The assistant responds with vetted facts and
+          balanced guidance while reminding you that every move carries risk. Always cross-check critical decisions.
+        </p>
+        <div class="ai-meta" aria-live="polite">Last updated: 1 December 2025</div>
+      </div>
+
+      <div class="ai-chat-panel">
+        <div class="ai-messages" id="aiMessages" role="log" aria-live="polite" aria-label="Conversation log"></div>
+        <form class="ai-form" id="aiForm" autocomplete="off">
+          <label for="aiInput" class="sr-only">Ask about crypto</label>
+          <input type="text" id="aiInput" class="ai-input" name="prompt" placeholder="Ask about Bitcoin, staking, regulation, strategy…" required />
+          <button type="submit" class="ai-submit" id="aiSubmit">Send</button>
+        </form>
+      </div>
+
+      <p class="ai-hint">
+        Guidance is educational only. Markets change fast, so confirm numbers independently and consider consulting a
+        licensed professional before acting.
+      </p>
+    </section>
+
     <footer class="footer">
       Built to hack dopamine, not just dollars. Stay on mission.
     </footer>
   </div>
 
   <script>
+    /************* CRYPTO INTEL ASSISTANT *************/
+    const aiKnowledgeBase = [
+      {
+        topic: "bitcoin",
+        keywords: ["bitcoin", "btc", "satoshi", "halving", "digital gold"],
+        facts: [
+          "Bitcoin runs on proof-of-work mining with issuance capped at 21 million coins, keeping long-term supply predictable.",
+          "The most recent halving on 19 April 2024 reduced block rewards to 3.125 BTC, so new supply now grows more slowly."
+        ],
+        guidance:
+          "Track network congestion before moving BTC; batching transactions or tapping Lightning can help manage fees during busy windows."
+      },
+      {
+        topic: "ethereum",
+        keywords: ["ethereum", "eth", "stak", "l2", "rollup", "evm"],
+        facts: [
+          "Ethereum has used proof-of-stake since the Merge in September 2022, letting validators secure the chain with staked ETH instead of miners.",
+          "Layer-2 rollups settle back to Ethereum mainnet, so gas demand and security ultimately tie into the base chain."
+        ],
+        guidance:
+          "Compare staking yields after protocol upgrades and factor in withdrawal queues or slashing rules before delegating ETH."
+      },
+      {
+        topic: "stablecoins",
+        keywords: ["stablecoin", "usdc", "usdt", "peg", "stable"],
+        facts: [
+          "Reserve-backed stablecoins such as USDC and USDT aim to stay near $1.00 by holding short-term treasuries and cash equivalents.",
+          "Algorithmic or undercollateralized designs have a history of breaking their pegs under stress, so collateral transparency matters."
+        ],
+        guidance:
+          "Diversify issuers, read attestation reports, and confirm which chains a stablecoin natively supports before parking large balances."
+      },
+      {
+        topic: "defi",
+        keywords: ["defi", "yield", "liquidity", "amm", "dex", "lend", "borrow"],
+        facts: [
+          "DeFi protocols route swaps through automated market makers that rely on liquidity pools supplied by depositors.",
+          "Smart-contract exploits and governance takeovers remain common, even on audited protocols, so due diligence never stops."
+        ],
+        guidance:
+          "Limit approvals, monitor protocol treasuries, and size positions assuming temporary loss or pauses can happen without warning."
+      },
+      {
+        topic: "security",
+        keywords: ["security", "hardware", "seed", "wallet", "ledger", "trezor", "phishing"],
+        facts: [
+          "Hardware wallets keep private keys offline, shrinking the attack surface for malware and phishing links.",
+          "Most retail breaches stem from reused passwords or signing malicious transactions, not direct blockchain failures."
+        ],
+        guidance:
+          "Store seed phrases in multiple secure formats, enable multi-factor auth, and review transaction details carefully before signing."
+      },
+      {
+        topic: "regulation",
+        keywords: ["regulation", "irs", "tax", "sec", "compliance", "rules"],
+        facts: [
+          "In the United States, the IRS treats cryptocurrencies as property, so selling, swapping, or spending triggers capital-gains reporting.",
+          "Regulators focus on KYC/AML controls for custodial platforms, and enforcement actions can freeze or delist assets quickly."
+        ],
+        guidance:
+          "Keep organized trade logs, monitor IRS guidance, and confirm exchange licensing in your state before onboarding capital."
+      },
+      {
+        topic: "portfolio",
+        keywords: ["portfolio", "allocate", "risk", "diversify", "rebalance", "strategy", "invest"],
+        facts: [
+          "Crypto assets routinely post annualized volatility above 70%, far higher than traditional equity benchmarks.",
+          "Liquidity and network effects concentrate returns in a small set of assets each cycle, so concentration risk is real."
+        ],
+        guidance:
+          "Define allocation bands, rebalance on a schedule, and align exposure with your time horizon and drawdown tolerance."
+      }
+    ];
+
+    const aiFallbacks = [
+      "Crypto markets move around the clock, so combine on-chain metrics, liquidity depth, and macro headlines before reacting.",
+      "When research can’t answer your question, start with primary sources like whitepapers, audited financials, and regulatory filings.",
+      "Focus on product-market fit, funding runway, and real user traction before trusting any crypto narrative."
+    ];
+
+    const aiSafetyNotes = [
+      "This console shares education only. Independently verify numbers and consider qualified financial, legal, or tax counsel before acting.",
+      "Never risk funds you cannot afford to lock up or lose. Double-check contract addresses and URLs before connecting wallets.",
+      "Maintain diversified custody plans, keep emergency liquidity off-exchange, and update your security hygiene regularly."
+    ];
+
+    const aiActionCues = ["should i", "buy", "sell", "invest", "trade", "hold", "short", "leverage"];
+
+    let aiMessagesEl;
+    let aiFormEl;
+    let aiInputEl;
+    let aiSubmitEl;
+    let aiExchangeCount = 0;
+
+    function appendAIMessage(text, sender = "agent") {
+      if (!aiMessagesEl) return;
+      const messageEl = document.createElement("div");
+      messageEl.classList.add("ai-message");
+      if (sender === "user") {
+        messageEl.classList.add("user");
+      }
+      messageEl.textContent = text.trim();
+      aiMessagesEl.appendChild(messageEl);
+      aiMessagesEl.scrollTop = aiMessagesEl.scrollHeight;
+    }
+
+    function scoreKnowledgeEntry(normalizedText, entry) {
+      return entry.keywords.reduce((score, keyword) => {
+        return score + (normalizedText.includes(keyword) ? 1 : 0);
+      }, 0);
+    }
+
+    function buildResponseFromEntry(entry, normalizedText) {
+      const actionDetected = aiActionCues.some((cue) => normalizedText.includes(cue));
+      const facts = entry.facts.join("\n\n");
+      let response = `${facts}\n\n${entry.guidance}`;
+      if (actionDetected) {
+        response += "\n\nConsider scenario planning and position sizing before executing any orders.";
+      }
+      return response;
+    }
+
+    function generateAIResponse(userText) {
+      const normalized = userText.toLowerCase();
+      let bestEntry = null;
+      let bestScore = 0;
+
+      for (const entry of aiKnowledgeBase) {
+        const score = scoreKnowledgeEntry(normalized, entry);
+        if (score > bestScore) {
+          bestScore = score;
+          bestEntry = entry;
+        }
+      }
+
+      let response;
+      if (bestEntry && bestScore > 0) {
+        response = buildResponseFromEntry(bestEntry, normalized);
+      } else {
+        const fallback = aiFallbacks[aiExchangeCount % aiFallbacks.length];
+        const actionDetected = aiActionCues.some((cue) => normalized.includes(cue));
+        response = fallback;
+        if (actionDetected) {
+          response += "\n\nMap out upside, downside, and exit triggers before committing capital.";
+        }
+      }
+
+      const safetyTail = aiSafetyNotes[aiExchangeCount % aiSafetyNotes.length];
+      aiExchangeCount += 1;
+
+      return `${response}\n\n${safetyTail}`;
+    }
+
+    function setupCryptoIntel() {
+      aiMessagesEl = document.getElementById("aiMessages");
+      aiFormEl = document.getElementById("aiForm");
+      aiInputEl = document.getElementById("aiInput");
+      aiSubmitEl = document.getElementById("aiSubmit");
+
+      if (!aiMessagesEl || !aiFormEl || !aiInputEl || !aiSubmitEl) {
+        return;
+      }
+
+      appendAIMessage(
+        "Crypto Intel Console online. Data horizon: 1 December 2025. Ask for facts, market structure, or risk frameworks to receive balanced guidance.",
+        "agent"
+      );
+
+      aiFormEl.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const userInput = aiInputEl.value.trim();
+        if (!userInput) {
+          return;
+        }
+
+        appendAIMessage(userInput, "user");
+        aiInputEl.value = "";
+        aiInputEl.focus();
+        aiSubmitEl.disabled = true;
+
+        window.setTimeout(() => {
+          try {
+            const response = generateAIResponse(userInput);
+            appendAIMessage(response, "agent");
+          } catch (error) {
+            console.error("Crypto Intel error:", error);
+            appendAIMessage("Intel module encountered an unexpected issue. Refresh the page and try again.", "agent");
+          } finally {
+            aiSubmitEl.disabled = false;
+            aiInputEl.focus();
+          }
+        }, 360);
+      });
+    }
+
     /************* SAVINGS TRACKER LOGIC *************/
     const GOAL = 1000;
     const STORAGE_KEY = "dopamine_savings_total";
@@ -785,6 +1327,9 @@
     let signer;
     let currentAccount = null;
 
+    // Wallet leaderboard state
+    let trackedWallets = []; // array of { address: string }
+
     const NETWORK_NAMES = {
       1: { name: "Ethereum Mainnet", symbol: "ETH" },
       137: { name: "Polygon Mainnet", symbol: "MATIC" },
@@ -840,6 +1385,7 @@
             currentAccount = null;
             walletAddressEl.textContent = "Not connected";
             walletBalanceEl.textContent = "Balance: —";
+            refreshLeaderboard();
           } else {
             currentAccount = accounts[0];
             walletAddressEl.textContent = shortenAddress(currentAccount);
@@ -857,6 +1403,7 @@
           walletBalanceEl.textContent = "Balance: —";
           networkStatusEl.textContent = "Network: —";
           networkStatusEl.className = "network-status";
+          refreshLeaderboard();
         });
       } catch (err) {
         console.error("Web3Modal connect error:", err);
@@ -895,8 +1442,11 @@
         total = 0;
         saveTotal();
         updateUI();
+        refreshLeaderboard();
         return;
       }
+
+      ensureTrackedWallet(currentAccount);
 
       try {
         const network = await web3Provider.getNetwork();
@@ -910,11 +1460,103 @@
           total = balanceNumber;
           saveTotal();
           updateUI();
+          refreshLeaderboard();
         }
       } catch (err) {
         console.error("Error reading balance:", err);
         walletBalanceEl.textContent = "Balance: Error";
       }
+    }
+
+    function ensureTrackedWallet(address) {
+      if (!address) {
+        return;
+      }
+
+      const normalized = address.toLowerCase();
+      const exists = trackedWallets.some((item) => item.address.toLowerCase() === normalized);
+      if (!exists) {
+        trackedWallets.push({ address });
+      }
+    }
+
+    async function refreshLeaderboard() {
+      const tbody = document.getElementById("leaderboardBody");
+      if (!tbody) return;
+
+      tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+
+      try {
+        if (typeof ethers === "undefined" || !ethers.providers || !ethers.utils) {
+          tbody.innerHTML = "<tr><td colspan='4'>Ethers.js unavailable.</td></tr>";
+          return;
+        }
+
+        let provider = web3Provider;
+        if (!provider) {
+          provider = new ethers.providers.JsonRpcProvider("https://cloudflare-eth.com");
+        }
+
+        const results = [];
+        for (const item of trackedWallets) {
+          if (!item || !item.address) {
+            continue;
+          }
+
+          try {
+            const balanceWei = await provider.getBalance(item.address);
+            const balanceEth = Number(ethers.utils.formatEther(balanceWei));
+            results.push({
+              address: item.address,
+              balance: balanceEth
+            });
+          } catch (err) {
+            console.error("Error fetching balance for", item.address, err);
+          }
+        }
+
+        results.sort((a, b) => b.balance - a.balance);
+
+        tbody.innerHTML = "";
+        results.forEach((entry, idx) => {
+          const tr = document.createElement("tr");
+          if (currentAccount && entry.address.toLowerCase() === currentAccount.toLowerCase()) {
+            tr.classList.add("leaderboard-row-self");
+          }
+          const rankName = typeof getRank === "function" ? getRank(entry.balance) : "Recruit";
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${shortenAddress(entry.address)}</td>
+            <td>${entry.balance.toFixed(4)} ETH</td>
+            <td><span class="leaderboard-rank-badge">${rankName}</span></td>
+          `.trim();
+          tbody.appendChild(tr);
+        });
+
+        if (results.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='4'>No wallets tracked yet.</td></tr>";
+        }
+      } catch (err) {
+        console.error("Error refreshing leaderboard:", err);
+        tbody.innerHTML = "<tr><td colspan='4'>Error loading leaderboard.</td></tr>";
+      }
+    }
+
+    function addWalletToLeaderboard() {
+      const input = document.getElementById("leaderboardWalletInput");
+      if (!input) return;
+      const raw = (input.value || "").trim();
+      if (!raw) return;
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(raw)) {
+        alert("Please enter a valid 0x wallet address.");
+        return;
+      }
+
+      ensureTrackedWallet(raw);
+
+      input.value = "";
+      refreshLeaderboard();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -924,6 +1566,11 @@
       connectWalletBtn = document.getElementById("connectWalletBtn");
       rankMenuBtn = document.getElementById("rankMenuBtn");
       rankMenuOptions = document.getElementById("rankMenuOptions");
+      const leaderboardAddBtn = document.getElementById("leaderboardAddBtn");
+      const leaderboardRefreshBtn = document.getElementById("leaderboardRefreshBtn");
+      const leaderboardWalletInput = document.getElementById("leaderboardWalletInput");
+
+      setupCryptoIntel();
 
       if (!window.Web3Modal || !window.WalletConnectProvider || !window.ethers) {
         alert("Web3Modal scripts failed to load. Check your connection and reload.");
@@ -933,6 +1580,23 @@
 
       if (connectWalletBtn) {
         connectWalletBtn.addEventListener("click", connectWallet);
+      }
+
+      if (leaderboardAddBtn) {
+        leaderboardAddBtn.addEventListener("click", addWalletToLeaderboard);
+      }
+
+      if (leaderboardRefreshBtn) {
+        leaderboardRefreshBtn.addEventListener("click", refreshLeaderboard);
+      }
+
+      if (leaderboardWalletInput) {
+        leaderboardWalletInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            addWalletToLeaderboard();
+          }
+        });
       }
 
       if (rankMenuBtn && rankMenuOptions) {
@@ -966,6 +1630,10 @@
       }
 
       loadSavedTotal();
+      if (currentAccount) {
+        ensureTrackedWallet(currentAccount);
+      }
+      refreshLeaderboard();
     });
   </script>
 </body>
