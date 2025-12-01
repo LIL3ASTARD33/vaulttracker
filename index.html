@@ -795,23 +795,122 @@
       }
     }
 
-    .web3modal-modal-lightbox {
-      background-color: rgba(0, 0, 0, 0.85) !important;
-      backdrop-filter: none !important;
-      z-index: 9999 !important;
+    .wallet-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 2, 4, 0.92);
+      backdrop-filter: blur(18px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 9999;
+      transition: opacity 0.2s ease;
+      opacity: 0;
     }
 
-    .web3modal-modal-card {
-      background-color: #020617 !important;
-      color: #e5e7eb !important;
-      border-radius: 18px !important;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+    .wallet-modal.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .wallet-modal-content {
+      width: min(420px, 100%);
+      background: radial-gradient(circle at 10% 10%, rgba(57, 255, 20, 0.12), transparent 65%), var(--bg-panel-strong);
+      border: 1px solid var(--surface-border);
+      border-radius: 26px;
+      position: relative;
+      padding: 28px 24px 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+      text-align: center;
+    }
+
+    .wallet-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(57, 255, 20, 0.18);
+      border: 1px solid var(--surface-border);
+      border-radius: 999px;
+      color: var(--text-primary);
+      width: 34px;
+      height: 34px;
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: var(--glow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .wallet-modal-close:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 18px rgba(57, 255, 20, 0.5);
+    }
+
+    .wallet-modal-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .wallet-modal-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 22px;
+    }
+
+    .wallet-modal-footer {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .mobile-wallet-selector {
+      display: grid;
+      gap: 14px;
+    }
+
+    .wallet-btn {
+      border: 1px solid var(--surface-border);
+      border-radius: 18px;
+      padding: 14px 18px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, rgba(57, 255, 20, 0.2), rgba(57, 255, 20, 0.05));
+      color: var(--text-primary);
+      box-shadow: 0 0 18px rgba(57, 255, 20, 0.24);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .wallet-btn:hover,
+    .wallet-btn:focus {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, rgba(57, 255, 20, 0.35), rgba(57, 255, 20, 0.12));
+      box-shadow: 0 0 26px rgba(57, 255, 20, 0.45);
+      outline: none;
+    }
+
+    @media (max-width: 480px) {
+      .wallet-modal-content {
+        padding: 26px 18px 30px;
+        border-radius: 22px;
+      }
+
+      .wallet-btn {
+        font-size: 1rem;
+        padding: 16px 20px;
+      }
     }
   </style>
 
   <!-- Web3Modal + WalletConnect + Ethers via CDN -->
-  <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
-  <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.9.2/dist/index.umd.min.js"></script>
   <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 
@@ -1321,11 +1420,15 @@
       });
     }
 
-    /************* WEB3MODAL + WALLETCONNECT *************/
-    let web3Modal;
+    /************* WALLET CONNECTION *************/
+    const metadataUrl = window.location.origin;
+
+    let walletConnectProvider;
+    let activeProvider = null;
     let web3Provider;   // ethers.js Web3Provider
     let signer;
     let currentAccount = null;
+    let connectedChainId = null;
 
     // Wallet leaderboard state
     let trackedWallets = []; // array of { address: string }
@@ -1348,67 +1451,242 @@
       return addr.slice(0, 6) + "..." + addr.slice(-4);
     }
 
-    function initWeb3Modal() {
-      const providerOptions = {
-        walletconnect: {
-          package: window.WalletConnectProvider.default,
-          options: {
-            // Public Ethereum RPC; you can swap for your own if you like
-            rpc: {
-              1: "https://cloudflare-eth.com"
-            }
+    function parseChainId(raw) {
+      if (raw === null || typeof raw === "undefined") {
+        return null;
+      }
+      if (typeof raw === "number") {
+        return raw;
+      }
+      if (typeof raw === "string") {
+        if (raw.startsWith("0x") || raw.startsWith("0X")) {
+          return parseInt(raw, 16);
+        }
+        const segments = raw.split(":");
+        const candidate = segments.length >= 2 ? segments[1] : segments[0];
+        const parsed = parseInt(candidate, 10);
+        return Number.isNaN(parsed) ? null : parsed;
+      }
+      return null;
+    }
+
+    function updateConnectionButtonLabel() {
+      if (!connectWalletBtn) return;
+      if (currentAccount) {
+        connectWalletBtn.textContent = `Connected: ${shortenAddress(currentAccount)}`;
+        connectWalletBtn.classList.add("connected");
+      } else {
+        connectWalletBtn.textContent = "Connect Wallet";
+        connectWalletBtn.classList.remove("connected");
+      }
+    }
+
+    async function getWalletConnectProvider() {
+      if (walletConnectProvider) {
+        return walletConnectProvider;
+      }
+
+      const providerModule = window["@walletconnect/ethereum-provider"];
+      const ProviderCtor =
+        providerModule?.default ||
+        providerModule?.EthereumProvider ||
+        window.WalletConnectProvider?.default ||
+        window.WalletConnectProvider;
+
+      if (!ProviderCtor) {
+        console.error("WalletConnect provider library is unavailable.");
+        return null;
+      }
+
+      const metadataIconUrl = `${metadataUrl.replace(/\/$/, "")}/icon.png`;
+
+      try {
+        if (typeof ProviderCtor.init === "function") {
+          walletConnectProvider = await ProviderCtor.init({
+            projectId: "demo",
+            relayUrl: "wss://relay.walletconnect.com",
+            metadata: {
+              name: "VaultTracker",
+              description: "Mobile-friendly wallet connection",
+              url: metadataUrl,
+              icons: [metadataIconUrl]
+            },
+            chains: [1],
+            showQrModal: true
+          });
+        } else {
+          walletConnectProvider = new ProviderCtor({
+            projectId: "demo",
+            relayUrl: "wss://relay.walletconnect.com",
+            metadata: {
+              name: "VaultTracker",
+              description: "Mobile-friendly wallet connection",
+              url: metadataUrl,
+              icons: [metadataIconUrl]
+            },
+            showQrModal: true,
+            chainId: 1
+          });
+        }
+
+        return walletConnectProvider;
+      } catch (err) {
+        console.error("Failed to initialize WalletConnect provider:", err);
+        return null;
+      }
+    }
+
+    function attachProviderEvents(provider) {
+      if (activeProvider && activeProvider !== provider && typeof activeProvider.removeListener === "function") {
+        activeProvider.removeListener("accountsChanged", handleAccountsChanged);
+        activeProvider.removeListener("chainChanged", handleChainChanged);
+        activeProvider.removeListener("disconnect", handleDisconnect);
+      }
+
+      if (!provider || typeof provider.on !== "function") {
+        activeProvider = provider || null;
+        return;
+      }
+
+      if (typeof provider.removeListener === "function") {
+        provider.removeListener("accountsChanged", handleAccountsChanged);
+        provider.removeListener("chainChanged", handleChainChanged);
+        provider.removeListener("disconnect", handleDisconnect);
+      }
+
+      provider.on("accountsChanged", handleAccountsChanged);
+      provider.on("chainChanged", handleChainChanged);
+      provider.on("disconnect", handleDisconnect);
+
+      activeProvider = provider;
+    }
+
+    async function handleAccountsChanged(accounts) {
+      if (!accounts || accounts.length === 0) {
+        handleDisconnect();
+        return;
+      }
+
+      currentAccount = accounts[0];
+      walletAddressEl.textContent = shortenAddress(currentAccount);
+      updateConnectionButtonLabel();
+      ensureTrackedWallet(currentAccount);
+      await refreshNetworkAndBalance();
+    }
+
+    async function handleChainChanged(chainId) {
+      const parsed = parseChainId(chainId);
+      if (parsed !== null) {
+        connectedChainId = parsed;
+      }
+      await refreshNetworkAndBalance();
+    }
+
+    function handleDisconnect() {
+      currentAccount = null;
+      connectedChainId = null;
+      signer = null;
+      web3Provider = null;
+      walletAddressEl.textContent = "Not connected";
+      walletBalanceEl.textContent = "Balance: —";
+      networkStatusEl.textContent = "Network: —";
+      networkStatusEl.className = "network-status";
+      updateConnectionButtonLabel();
+      total = 0;
+      saveTotal();
+      updateUI();
+      refreshLeaderboard();
+    }
+
+    async function connectDesktopWallet() {
+      if (!window.ethereum) {
+        alert("No injected wallet detected. Please install a browser wallet or use a mobile wallet.");
+        return;
+      }
+
+      const provider = window.ethereum;
+
+      try {
+        const accounts = await provider.request({ method: "eth_requestAccounts" });
+        let chainIdRaw = null;
+        try {
+          chainIdRaw = await provider.request({ method: "eth_chainId" });
+        } catch (chainErr) {
+          console.warn("Unable to read chainId from injected provider via request:", chainErr);
+          chainIdRaw = provider.chainId;
+        }
+        connectedChainId = parseChainId(chainIdRaw);
+        web3Provider = new ethers.providers.Web3Provider(provider);
+        signer = web3Provider.getSigner();
+        await handleAccountsChanged(accounts);
+        attachProviderEvents(provider);
+      } catch (err) {
+        console.error("Injected wallet connect error:", err);
+        alert("Wallet connection cancelled or failed.");
+      }
+    }
+
+    async function connectWithWalletConnect() {
+      try {
+        const provider = await getWalletConnectProvider();
+        if (!provider) {
+          alert("WalletConnect is unavailable right now. Please try again later.");
+          return;
+        }
+
+        if (!Array.isArray(provider.accounts) || provider.accounts.length === 0) {
+          if (typeof provider.enable === "function") {
+            await provider.enable();
+          } else if (typeof provider.connect === "function") {
+            await provider.connect();
           }
         }
-      };
 
-      web3Modal = new window.Web3Modal.default({
-        cacheProvider: true,
-        providerOptions
-      });
+        let accounts = Array.isArray(provider.accounts) ? [...provider.accounts] : [];
+        if ((!accounts || accounts.length === 0) && provider.session?.namespaces?.eip155?.accounts) {
+          accounts = provider.session.namespaces.eip155.accounts.map((entry) => {
+            const parts = entry.split(":");
+            return parts[parts.length - 1];
+          });
+        }
+        accounts = accounts.map((entry) => {
+          if (typeof entry !== "string") return entry;
+          if (entry.includes(":")) {
+            const parts = entry.split(":");
+            return parts[parts.length - 1];
+          }
+          return entry;
+        });
+        let parsedChainId = parseChainId(provider.chainId);
+        if (parsedChainId === null && provider.session?.namespaces?.eip155?.chains?.length) {
+          parsedChainId = parseChainId(provider.session.namespaces.eip155.chains[0]);
+        }
+        if (parsedChainId !== null) {
+          connectedChainId = parsedChainId;
+        }
+
+        if (!accounts || accounts.length === 0) {
+          alert("WalletConnect did not return any accounts. Please try again.");
+          return;
+        }
+
+        web3Provider = new ethers.providers.Web3Provider(provider);
+        signer = web3Provider.getSigner();
+        attachProviderEvents(provider);
+        await handleAccountsChanged(accounts);
+      } catch (err) {
+        console.error("WalletConnect connection error:", err);
+        alert("WalletConnect connection cancelled or failed.");
+      }
     }
 
     async function connectWallet() {
-      try {
-        const instance = await web3Modal.connect();     // opens modal
-        web3Provider = new ethers.providers.Web3Provider(instance);
-        signer = web3Provider.getSigner();
-
-        const addr = await signer.getAddress();
-        currentAccount = addr;
-        walletAddressEl.textContent = shortenAddress(addr);
-
-        await refreshNetworkAndBalance();
-
-        // Events
-        instance.on("accountsChanged", async (accounts) => {
-          if (!accounts || accounts.length === 0) {
-            currentAccount = null;
-            walletAddressEl.textContent = "Not connected";
-            walletBalanceEl.textContent = "Balance: —";
-            refreshLeaderboard();
-          } else {
-            currentAccount = accounts[0];
-            walletAddressEl.textContent = shortenAddress(currentAccount);
-            await refreshNetworkAndBalance();
-          }
-        });
-
-        instance.on("chainChanged", async () => {
-          await refreshNetworkAndBalance();
-        });
-
-        instance.on("disconnect", () => {
-          currentAccount = null;
-          walletAddressEl.textContent = "Not connected";
-          walletBalanceEl.textContent = "Balance: —";
-          networkStatusEl.textContent = "Network: —";
-          networkStatusEl.className = "network-status";
-          refreshLeaderboard();
-        });
-      } catch (err) {
-        console.error("Web3Modal connect error:", err);
-        alert("Wallet connection cancelled or failed.");
+      if (window.ethereum) {
+        await connectDesktopWallet();
+        return;
       }
+
+      await connectWithWalletConnect();
     }
 
     async function refreshNetworkAndBalance() {
@@ -1425,6 +1703,7 @@
 
       try {
         const network = await web3Provider.getNetwork();
+        connectedChainId = network?.chainId ?? connectedChainId;
         const cfg = NETWORK_NAMES[network.chainId] || { name: `Chain ${network.chainId}`, symbol: "ETH" };
 
         networkStatusEl.textContent = `Network: ${cfg.name}`;
@@ -1443,6 +1722,7 @@
         saveTotal();
         updateUI();
         refreshLeaderboard();
+        connectedChainId = null;
         return;
       }
 
@@ -1450,6 +1730,7 @@
 
       try {
         const network = await web3Provider.getNetwork();
+        connectedChainId = network?.chainId ?? connectedChainId;
         const cfg = NETWORK_NAMES[network.chainId] || { symbol: "ETH" };
         const balanceWei = await web3Provider.getBalance(currentAccount);
         const balance = ethers.utils.formatEther(balanceWei);
@@ -1572,14 +1853,24 @@
 
       setupCryptoIntel();
 
-      if (!window.Web3Modal || !window.WalletConnectProvider || !window.ethers) {
-        alert("Web3Modal scripts failed to load. Check your connection and reload.");
-      } else {
-        initWeb3Modal();
+      if (!window.ethers) {
+        alert("Ethers.js failed to load. Check your connection and reload.");
       }
 
       if (connectWalletBtn) {
         connectWalletBtn.addEventListener("click", connectWallet);
+        updateConnectionButtonLabel();
+      }
+
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        // Surface already-connected injected wallets without prompting again.
+        web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = web3Provider.getSigner();
+        connectedChainId = parseChainId(window.ethereum.chainId);
+        handleAccountsChanged([window.ethereum.selectedAddress]).catch((err) => {
+          console.error("Failed to hydrate existing wallet connection:", err);
+        });
+        attachProviderEvents(window.ethereum);
       }
 
       if (leaderboardAddBtn) {
