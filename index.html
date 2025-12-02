@@ -412,6 +412,42 @@
       box-shadow: 0 0 22px rgba(57, 255, 20, 0.2);
     }
 
+    .ai-message.loading {
+      font-style: italic;
+      color: rgba(148, 255, 198, 0.7);
+    }
+
+    .loading-dots {
+      display: inline-block;
+    }
+
+    .loading-dots span {
+      animation: loadingPulse 1.4s infinite;
+      display: inline-block;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes loadingPulse {
+      0%, 60%, 100% {
+        opacity: 0.3;
+      }
+      30% {
+        opacity: 1;
+      }
+    }
+
+    .ai-input:disabled, .ai-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .ai-meta {
       font-size: 0.7rem;
       color: rgba(148, 255, 198, 0.5);
@@ -1149,157 +1185,56 @@
   </div>
 
   <script>
-    /************* CRYPTO INTEL ASSISTANT *************/
-    const aiKnowledgeBase = [
-      {
-        topic: "bitcoin",
-        keywords: ["bitcoin", "btc", "satoshi", "halving", "digital gold"],
-        facts: [
-          "Bitcoin runs on proof-of-work mining with issuance capped at 21 million coins, keeping long-term supply predictable.",
-          "The most recent halving on 19 April 2024 reduced block rewards to 3.125 BTC, so new supply now grows more slowly."
-        ],
-        guidance:
-          "Track network congestion before moving BTC; batching transactions or tapping Lightning can help manage fees during busy windows."
-      },
-      {
-        topic: "ethereum",
-        keywords: ["ethereum", "eth", "stak", "l2", "rollup", "evm"],
-        facts: [
-          "Ethereum has used proof-of-stake since the Merge in September 2022, letting validators secure the chain with staked ETH instead of miners.",
-          "Layer-2 rollups settle back to Ethereum mainnet, so gas demand and security ultimately tie into the base chain."
-        ],
-        guidance:
-          "Compare staking yields after protocol upgrades and factor in withdrawal queues or slashing rules before delegating ETH."
-      },
-      {
-        topic: "stablecoins",
-        keywords: ["stablecoin", "usdc", "usdt", "peg", "stable"],
-        facts: [
-          "Reserve-backed stablecoins such as USDC and USDT aim to stay near $1.00 by holding short-term treasuries and cash equivalents.",
-          "Algorithmic or undercollateralized designs have a history of breaking their pegs under stress, so collateral transparency matters."
-        ],
-        guidance:
-          "Diversify issuers, read attestation reports, and confirm which chains a stablecoin natively supports before parking large balances."
-      },
-      {
-        topic: "defi",
-        keywords: ["defi", "yield", "liquidity", "amm", "dex", "lend", "borrow"],
-        facts: [
-          "DeFi protocols route swaps through automated market makers that rely on liquidity pools supplied by depositors.",
-          "Smart-contract exploits and governance takeovers remain common, even on audited protocols, so due diligence never stops."
-        ],
-        guidance:
-          "Limit approvals, monitor protocol treasuries, and size positions assuming temporary loss or pauses can happen without warning."
-      },
-      {
-        topic: "security",
-        keywords: ["security", "hardware", "seed", "wallet", "ledger", "trezor", "phishing"],
-        facts: [
-          "Hardware wallets keep private keys offline, shrinking the attack surface for malware and phishing links.",
-          "Most retail breaches stem from reused passwords or signing malicious transactions, not direct blockchain failures."
-        ],
-        guidance:
-          "Store seed phrases in multiple secure formats, enable multi-factor auth, and review transaction details carefully before signing."
-      },
-      {
-        topic: "regulation",
-        keywords: ["regulation", "irs", "tax", "sec", "compliance", "rules"],
-        facts: [
-          "In the United States, the IRS treats cryptocurrencies as property, so selling, swapping, or spending triggers capital-gains reporting.",
-          "Regulators focus on KYC/AML controls for custodial platforms, and enforcement actions can freeze or delist assets quickly."
-        ],
-        guidance:
-          "Keep organized trade logs, monitor IRS guidance, and confirm exchange licensing in your state before onboarding capital."
-      },
-      {
-        topic: "portfolio",
-        keywords: ["portfolio", "allocate", "risk", "diversify", "rebalance", "strategy", "invest"],
-        facts: [
-          "Crypto assets routinely post annualized volatility above 70%, far higher than traditional equity benchmarks.",
-          "Liquidity and network effects concentrate returns in a small set of assets each cycle, so concentration risk is real."
-        ],
-        guidance:
-          "Define allocation bands, rebalance on a schedule, and align exposure with your time horizon and drawdown tolerance."
-      }
-    ];
-
-    const aiFallbacks = [
-      "Crypto markets move around the clock, so combine on-chain metrics, liquidity depth, and macro headlines before reacting.",
-      "When research can’t answer your question, start with primary sources like whitepapers, audited financials, and regulatory filings.",
-      "Focus on product-market fit, funding runway, and real user traction before trusting any crypto narrative."
-    ];
-
-    const aiSafetyNotes = [
-      "This console shares education only. Independently verify numbers and consider qualified financial, legal, or tax counsel before acting.",
-      "Never risk funds you cannot afford to lock up or lose. Double-check contract addresses and URLs before connecting wallets.",
-      "Maintain diversified custody plans, keep emergency liquidity off-exchange, and update your security hygiene regularly."
-    ];
-
-    const aiActionCues = ["should i", "buy", "sell", "invest", "trade", "hold", "short", "leverage"];
-
+    /************* CRYPTO INTEL ASSISTANT (AI-Powered) *************/
     let aiMessagesEl;
     let aiFormEl;
     let aiInputEl;
     let aiSubmitEl;
-    let aiExchangeCount = 0;
+    let aiConversationHistory = [];
 
-    function appendAIMessage(text, sender = "agent") {
-      if (!aiMessagesEl) return;
+    function appendAIMessage(text, sender = "agent", isLoading = false) {
+      if (!aiMessagesEl) return null;
       const messageEl = document.createElement("div");
       messageEl.classList.add("ai-message");
       if (sender === "user") {
         messageEl.classList.add("user");
       }
-      messageEl.textContent = text.trim();
+      if (isLoading) {
+        messageEl.classList.add("loading");
+        messageEl.innerHTML = '<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span> Analyzing your question...';
+      } else {
+        messageEl.textContent = text.trim();
+      }
       aiMessagesEl.appendChild(messageEl);
       aiMessagesEl.scrollTop = aiMessagesEl.scrollHeight;
+      return messageEl;
     }
 
-    function scoreKnowledgeEntry(normalizedText, entry) {
-      return entry.keywords.reduce((score, keyword) => {
-        return score + (normalizedText.includes(keyword) ? 1 : 0);
-      }, 0);
+    function removeLoadingMessage(loadingEl) {
+      if (loadingEl && loadingEl.parentNode) {
+        loadingEl.parentNode.removeChild(loadingEl);
+      }
     }
 
-    function buildResponseFromEntry(entry, normalizedText) {
-      const actionDetected = aiActionCues.some((cue) => normalizedText.includes(cue));
-      const facts = entry.facts.join("\n\n");
-      let response = `${facts}\n\n${entry.guidance}`;
-      if (actionDetected) {
-        response += "\n\nConsider scenario planning and position sizing before executing any orders.";
-      }
-      return response;
-    }
+    async function sendToAI(userMessage) {
+      const response = await fetch("/api/crypto-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          history: aiConversationHistory.slice(-10),
+        }),
+      });
 
-    function generateAIResponse(userText) {
-      const normalized = userText.toLowerCase();
-      let bestEntry = null;
-      let bestScore = 0;
-
-      for (const entry of aiKnowledgeBase) {
-        const score = scoreKnowledgeEntry(normalized, entry);
-        if (score > bestScore) {
-          bestScore = score;
-          bestEntry = entry;
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 
-      let response;
-      if (bestEntry && bestScore > 0) {
-        response = buildResponseFromEntry(bestEntry, normalized);
-      } else {
-        const fallback = aiFallbacks[aiExchangeCount % aiFallbacks.length];
-        const actionDetected = aiActionCues.some((cue) => normalized.includes(cue));
-        response = fallback;
-        if (actionDetected) {
-          response += "\n\nMap out upside, downside, and exit triggers before committing capital.";
-        }
-      }
-
-      const safetyTail = aiSafetyNotes[aiExchangeCount % aiSafetyNotes.length];
-      aiExchangeCount += 1;
-
-      return `${response}\n\n${safetyTail}`;
+      const data = await response.json();
+      return data.response;
     }
 
     function setupCryptoIntel() {
@@ -1313,34 +1248,58 @@
       }
 
       appendAIMessage(
-        "Crypto Intel Console online. Data horizon: 1 December 2025. Ask for facts, market structure, or risk frameworks to receive balanced guidance.",
+        "Crypto Intel Console online. Powered by AI. Ask me anything about cryptocurrency, blockchain technology, DeFi, market analysis, security, or investment strategies. I'll provide balanced guidance while keeping you informed of risks.",
         "agent"
       );
 
-      aiFormEl.addEventListener("submit", (event) => {
+      aiFormEl.addEventListener("submit", async (event) => {
         event.preventDefault();
         const userInput = aiInputEl.value.trim();
         if (!userInput) {
           return;
         }
 
+        if (userInput.length > 2000) {
+          appendAIMessage("Message too long. Please keep your question under 2000 characters.", "agent");
+          return;
+        }
+
         appendAIMessage(userInput, "user");
         aiInputEl.value = "";
-        aiInputEl.focus();
         aiSubmitEl.disabled = true;
+        aiInputEl.disabled = true;
 
-        window.setTimeout(() => {
-          try {
-            const response = generateAIResponse(userInput);
-            appendAIMessage(response, "agent");
-          } catch (error) {
-            console.error("Crypto Intel error:", error);
-            appendAIMessage("Intel module encountered an unexpected issue. Refresh the page and try again.", "agent");
-          } finally {
-            aiSubmitEl.disabled = false;
-            aiInputEl.focus();
+        const loadingEl = appendAIMessage("", "agent", true);
+
+        try {
+          const aiResponse = await sendToAI(userInput);
+
+          aiConversationHistory.push({ role: "user", content: userInput });
+          aiConversationHistory.push({ role: "assistant", content: aiResponse });
+
+          if (aiConversationHistory.length > 20) {
+            aiConversationHistory = aiConversationHistory.slice(-20);
           }
-        }, 360);
+
+          removeLoadingMessage(loadingEl);
+          appendAIMessage(aiResponse, "agent");
+        } catch (error) {
+          console.error("Crypto Intel error:", error);
+          removeLoadingMessage(loadingEl);
+
+          let errorMessage = "Intel module encountered an unexpected issue. Please try again.";
+          if (error.message.includes("busy") || error.message.includes("rate")) {
+            errorMessage = "The AI service is currently busy. Please wait a moment and try again.";
+          } else if (error.message.includes("not configured")) {
+            errorMessage = "AI service is not configured. Please contact support.";
+          }
+
+          appendAIMessage(errorMessage, "agent");
+        } finally {
+          aiSubmitEl.disabled = false;
+          aiInputEl.disabled = false;
+          aiInputEl.focus();
+        }
       });
     }
 
